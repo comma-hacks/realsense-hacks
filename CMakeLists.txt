@@ -6,7 +6,6 @@ project(t265dump)
 
 # Find librealsense2 installed package
 find_package(realsense2 REQUIRED)
-find_package(Eigen3 REQUIRED)
 
 # Enable C++11
 set(CMAKE_CXX_STANDARD 17)

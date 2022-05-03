@@ -3,11 +3,38 @@
 
 #include <librealsense2/rs.hpp>
 #include <iostream>
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/Geometry> 
+#include <cmath>
 
+struct Quaternion {
+    double w, x, y, z;
+};
 
-using namespace Eigen;
+struct EulerAngles {
+    double roll, pitch, yaw;
+};
+
+EulerAngles ToEulerAngles(Quaternion q) {
+    EulerAngles angles;
+
+    // roll (x-axis rotation)
+    double sinr_cosp = 2 * (q.w * q.x + q.y * q.z);
+    double cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y);
+    angles.roll = std::atan2(sinr_cosp, cosr_cosp);
+
+    // pitch (y-axis rotation)
+    double sinp = 2 * (q.w * q.y - q.z * q.x);
+    if (std::abs(sinp) >= 1)
+        angles.pitch = std::copysign(M_PI / 2, sinp); // use 90 degrees if out of range
+    else
+        angles.pitch = std::asin(sinp);
+
+    // yaw (z-axis rotation)
+    double siny_cosp = 2 * (q.w * q.z + q.x * q.y);
+    double cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
+    angles.yaw = std::atan2(siny_cosp, cosy_cosp);
+
+    return angles;
+}
 
 
 int main(int argc, char **argv)
@@ -39,11 +66,15 @@ int main(int argc, char **argv)
 
 
     // Print the x, y, z values of the translation, relative to initial position
-		std::cout << x << "," << y << "," << z << "," << pose.rotation.x << "," << pose.rotation.y << "," << pose.rotation.z << "," << pose.rotation.w << "\n";
+		//std::cout << x << "," << y << "," << z << "," << pose.rotation.x << "," << pose.rotation.y << "," << pose.rotation.z << "," << pose.rotation.w << "\n";
 
-    Quaternion q(pose.rotation.w, pose.rotation.x, pose.rotation.y, pose.rotation.z);
-    auto euler = q.toRotationMatrix().eulerAngles(0, 1, 2);
-    std::cout << "Euler from quaternion in roll, pitch, yaw"<< std::endl << euler << std::endl;
+    struct Quaternion q;
+    q.w = pose.rotation.w;
+    q.x = pose.rotation.x;
+    q.y = pose.rotation.y;
+    q.z = pose.rotation.z;
+    struct EulerAngles euler = ToEulerAngles(q);
+    std::cout << std::endl << euler.yaw << std::endl << euler.pitch << std::endl << euler.roll << std::endl;
 
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
