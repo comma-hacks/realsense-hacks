@@ -1,50 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0
-/**
- * Adapted from code by:
- *
- * Copyright (c) 2010 Alan Ott <alan@signal11.us>
- * Copyright (c) 2010 Signal 11 Software
- *
- * Specifically, the Hidraw Userspace Example:
- * https://github.com/torvalds/linux/blob/master/samples/hidraw/hid-example.c
- *
- * The code may be used by anyone for any purpose,
- */
-
-/* Linux */
-#include <linux/types.h>
-#include <linux/input.h>
-#include <linux/hidraw.h>
-
-/*
- * Ugly hack to work around failing compilation on systems that don't
- * yet populate new version of hidraw.h to userspace.
- */
-#ifndef HIDIOCSFEATURE
-#warning Please have your distro update the userspace kernel headers
-#define HIDIOCSFEATURE(len)    _IOC(_IOC_WRITE|_IOC_READ, 'H', 0x06, len)
-#define HIDIOCGFEATURE(len)    _IOC(_IOC_WRITE|_IOC_READ, 'H', 0x07, len)
-#endif
-
-/* Unix */
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-
-/* C */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-
 #include <chrono>
 #include <thread>
 
 #include <librealsense2/rs.hpp>
 #include <iostream>
-#include <iomanip>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry> 
+
+
+using namespace Eigen;
 
 
 int main(int argc, char **argv)
@@ -77,6 +40,10 @@ int main(int argc, char **argv)
 
     // Print the x, y, z values of the translation, relative to initial position
 		std::cout << x << "," << y << "," << z << "," << pose.rotation.x << "," << pose.rotation.y << "," << pose.rotation.z << "," << pose.rotation.w << "\n";
+
+    Quaternion q(pose.rotation.w, pose.rotation.x, pose.rotation.y, pose.rotation.z);
+    auto euler = q.toRotationMatrix().eulerAngles(0, 1, 2);
+    std::cout << "Euler from quaternion in roll, pitch, yaw"<< std::endl << euler << std::endl;
 
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
