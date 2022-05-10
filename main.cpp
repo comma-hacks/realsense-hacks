@@ -3,39 +3,10 @@
 
 #include <librealsense2/rs.hpp>
 #include <iostream>
-#include <cmath>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
 
-struct Quaternion {
-    double w, x, y, z;
-};
-
-struct EulerAngles {
-    double roll, pitch, yaw;
-};
-
-EulerAngles ToEulerAngles(Quaternion q) {
-    EulerAngles angles;
-
-    // roll (x-axis rotation)
-    double sinr_cosp = 2 * (q.w * q.x + q.y * q.z);
-    double cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y);
-    angles.roll = std::atan2(sinr_cosp, cosr_cosp);
-
-    // pitch (y-axis rotation)
-    double sinp = 2 * (q.w * q.y - q.z * q.x);
-    if (std::abs(sinp) >= 1)
-        angles.pitch = std::copysign(M_PI / 2, sinp); // use 90 degrees if out of range
-    else
-        angles.pitch = std::asin(sinp);
-
-    // yaw (z-axis rotation)
-    double siny_cosp = 2 * (q.w * q.z + q.x * q.y);
-    double cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
-    angles.yaw = std::atan2(siny_cosp, cosy_cosp);
-
-    return angles;
-}
-
+using namespace Eigen;
 
 int main(int argc, char **argv)
 {
@@ -60,21 +31,13 @@ int main(int argc, char **argv)
 
     int mult = 1000;
 
-    auto x = pose.translation.x * mult;
-    auto y = pose.translation.y * mult;
-    auto z = pose.translation.z * mult;
+    //auto x = pose.translation.x * mult;
+    //auto y = pose.translation.y * mult;
+    //auto z = pose.translation.z * mult;
 
-
-    // Print the x, y, z values of the translation, relative to initial position
-		//std::cout << x << "," << y << "," << z << "," << pose.rotation.x << "," << pose.rotation.y << "," << pose.rotation.z << "," << pose.rotation.w << "\n";
-
-    struct Quaternion q;
-    q.w = pose.rotation.w;
-    q.x = pose.rotation.x;
-    q.y = pose.rotation.y;
-    q.z = pose.rotation.z;
-    struct EulerAngles euler = ToEulerAngles(q);
-    std::cout << "{\"yaw\":" << euler.yaw << ",\"pitch\":" << euler.pitch << ",\"roll\":" << euler.roll << "}" << std::endl;
+    Quaternion q(pose.rotation.w, pose.rotation.x, pose.rotation.y, pose.rotation.z);
+    auto euler = q.toRotationMatrix().eulerAngles(0, 1, 2);
+    std::cout << "{\"yaw\":" << euler[0] << ",\"pitch\":" << euler[1] << ",\"roll\":" << euler[2] << "}" << std::endl;
 
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
