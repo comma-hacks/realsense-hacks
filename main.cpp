@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     q.y = pose.rotation.y;
     q.z = pose.rotation.z;
     struct EulerAngles euler = ToEulerAngles(q);
-    std::cout << std::endl << euler.yaw << std::endl << euler.pitch << std::endl << euler.roll << std::endl;
+    std::cout << "{\"yaw\":" << euler.yaw << ",\"pitch\":" << euler.pitch << ",\"roll\":" << euler.roll << "}" << std::endl;
 
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
