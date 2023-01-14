@@ -2,6 +2,7 @@
 #include <thread>
 #include <librealsense2/rs.hpp>
 #include <iostream>
+#include <iomanip>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
 #include "robot.h"
@@ -9,7 +10,9 @@
 
 using namespace Eigen;
 
-#define SLIP_REACTION_LIMIT 0.01
+#define SLIP_REACTION_LIMIT 0.1
+#define MOVEMENT_SPEED 0.1
+#define ROTATION_SPEED 0.1
 
 int main(int argc, char **argv)
 {
@@ -27,6 +30,8 @@ int main(int argc, char **argv)
 
   Vector3d desired_position(0.0, 0.0, 0.0);
   Quaternion<double> desired_rotation(1.0, 0.0, 0.0, 0.0);
+  Vector3d movement_increment(0.0, 0.0, 0.0);
+  double rotation_increment = 0.0;
 
   while (true)
   {
@@ -43,49 +48,52 @@ int main(int argc, char **argv)
     switch (mov)
     {
     case MOVE_FORWARD:
-      robotMoveForward();
+      movement_increment += Vector3d(MOVEMENT_SPEED, 0.0, 0.0);
       break;
     case MOVE_BACKWARD:
-      robotMoveBackward();
+      movement_increment += Vector3d(-MOVEMENT_SPEED, 0.0, 0.0);
       break;
     case ROTATE_LEFT:
-      robotRotateLeft();
+      rotation_increment += ROTATION_SPEED;
       break;
     case ROTATE_RIGHT:
-      robotRotateRight();
+      rotation_increment -= ROTATION_SPEED;
       break;
-    case NONE: {
-        // Calculate position and rotation errors
-        Vector3d position_error = desired_position - current_position;
-        Quaternion<double> rotation_error = desired_rotation * current_rotation.conjugate();
+    case NONE:
+    {
+      // Apply movement increment
+      desired_position += movement_increment;
+      movement_increment = Vector3d(0.0, 0.0, 0.0);
 
-        // Print position error and yaw error
-        double yaw_error = 2.0 * std::atan2(rotation_error.vec().z(), rotation_error.w());
-        std::cout << "Position Error: (" << position_error.x() << ", " << position_error.y() << ") Yaw Error: " << yaw_error << std::endl;
+    // Apply rotation increment
+      Quaternion<double> yaw_rotation(AngleAxisd(rotation_increment, Vector3d::UnitZ()));
+      desired_rotation = yaw_rotation * desired_rotation;
+      rotation_increment = 0.0;
 
-        // Apply inputs to the robot's web API based on the position error
-        if (position_error.x() > SLIP_REACTION_LIMIT)
-          robotMoveBackward();
-        else if (position_error.x() < -SLIP_REACTION_LIMIT)
-          robotMoveForward();
-        if (position_error.y() > SLIP_REACTION_LIMIT)
-          robotRotateLeft();
-        else if (position_error.y() < -SLIP_REACTION_LIMIT)
-          robotRotateRight();
+      // Calculate position and rotation errors
+      Vector3d position_error = desired_position - current_position;
+      Quaternion<double> rotation_error = desired_rotation * current_rotation.conjugate();
 
-        // Apply inputs to the robot's web API based on the rotation error
-        if (yaw_error > SLIP_REACTION_LIMIT)
-          robotRotateLeft();
-        else if (yaw_error < -SLIP_REACTION_LIMIT)
-          robotRotateRight();
+      // Print position error and yaw error
+      double yaw_error = 2.0 * std::atan2(rotation_error.vec().z(), rotation_error.w());
+      std::cout << std::fixed << std::setprecision(3) << "Position Error: (" << std::left << std::setw(6) << position_error.x() << ", " << std::setw(6) << position_error.y() << ") Yaw Error: " << yaw_error << std::endl;
+
+      // Apply inputs to the robot's web API based on the position error
+      if (position_error.x() > SLIP_REACTION_LIMIT)
+        robotMoveBackward();
+      else if (position_error.x() < -SLIP_REACTION_LIMIT)
+        robotMoveForward();
+
+      // Apply inputs to the robot's web API based on the rotation error
+      if (yaw_error > SLIP_REACTION_LIMIT)
+        robotRotateLeft();
+      else if (yaw_error < -SLIP_REACTION_LIMIT)
+        robotRotateRight();
     }
     default:
       break;
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
-
-  resetTerminal();
-  return 0;
 }
