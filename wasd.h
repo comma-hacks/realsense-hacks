@@ -29,8 +29,18 @@ void resetTerminal()
 
 MOVE checkTerminalInput()
 {
-  if (getchar() != EOF)
-  {
+  fd_set set;
+  struct timeval timeout;
+  int rv;
+
+  FD_ZERO(&set);
+  FD_SET(0, &set);
+  timeout.tv_sec = 0;
+  timeout.tv_usec = 0;
+  rv = select(1, &set, NULL, NULL, &timeout);
+  if (rv == -1) {
+    perror("select");
+  } else if (rv == 1) {
     char key = getchar();
     if (key == 'w' || key == 'W' || key == 'i' || key == 65)
     {
