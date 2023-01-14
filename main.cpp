@@ -1,15 +1,15 @@
 #include <chrono>
 #include <thread>
-
 #include <librealsense2/rs.hpp>
 #include <iostream>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
-
 #include "robot.h"
 #include "wasd.h"
 
 using namespace Eigen;
+
+#define SLIP_REACTION_LIMIT 0.01
 
 int main(int argc, char **argv)
 {
@@ -44,19 +44,15 @@ int main(int argc, char **argv)
     {
     case MOVE_FORWARD:
       robotMoveForward();
-      desired_position = current_position;
       break;
     case MOVE_BACKWARD:
       robotMoveBackward();
-      desired_position = current_position;
       break;
     case ROTATE_LEFT:
       robotRotateLeft();
-      desired_rotation = current_rotation;
       break;
     case ROTATE_RIGHT:
       robotRotateRight();
-      desired_rotation = current_rotation;
       break;
     case NONE: {
         // Calculate position and rotation errors
@@ -68,26 +64,26 @@ int main(int argc, char **argv)
         std::cout << "Position Error: (" << position_error.x() << ", " << position_error.y() << ") Yaw Error: " << yaw_error << std::endl;
 
         // Apply inputs to the robot's web API based on the position error
-        if (position_error.x() > 0.01)
+        if (position_error.x() > SLIP_REACTION_LIMIT)
           robotMoveBackward();
-        else if (position_error.x() < -0.01)
+        else if (position_error.x() < -SLIP_REACTION_LIMIT)
           robotMoveForward();
-        if (position_error.y() > 0.01)
+        if (position_error.y() > SLIP_REACTION_LIMIT)
           robotRotateLeft();
-        else if (position_error.y() < -0.01)
+        else if (position_error.y() < -SLIP_REACTION_LIMIT)
           robotRotateRight();
 
         // Apply inputs to the robot's web API based on the rotation error
-        if (yaw_error > 0.01)
+        if (yaw_error > SLIP_REACTION_LIMIT)
           robotRotateLeft();
-        else if (yaw_error < -0.01)
+        else if (yaw_error < -SLIP_REACTION_LIMIT)
           robotRotateRight();
     }
     default:
       break;
     }
 
-    // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
 
   resetTerminal();
