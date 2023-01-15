@@ -20,8 +20,6 @@ correct the rotation first before moving on to position. */
 #include "robot.h"
 #include "wasd.h"
 
-// using namespace Eigen;
-
 int main(int argc, char **argv)
 {
   setupTerminal();
@@ -29,8 +27,7 @@ int main(int argc, char **argv)
   rs2::config cfg;
   cfg.enable_stream(RS2_STREAM_POSE, RS2_FORMAT_6DOF);
   pipe.start(cfg);
-  while (true)
-  {
+  while (true) {
     auto frames = pipe.wait_for_frames();
     auto f = frames.first_or_default(RS2_STREAM_POSE);
     auto pose = f.as<rs2::pose_frame>().get_pose_data();
@@ -39,12 +36,18 @@ int main(int argc, char **argv)
     switch (mov)
     {
     case MOVE_FORWARD:
+      robotMoveForward();
+      break;
     case MOVE_BACKWARD:
+      robotMoveBackward();
+      break;
     case ROTATE_LEFT:
+      robotRotateLeft();
+      break;
     case ROTATE_RIGHT:
-    default:
+      robotRotateRight();
+      break;
     }
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
+  resetTerminal();
 }
