@@ -1,0 +1,11 @@
+#ifndef ROBOT_MOVE_H
+#define ROBOT_MOVE_H
+enum ROBOT_MOVE
+{
+  NONE = 0,
+  MOVE_FORWARD,
+  MOVE_BACKWARD,
+  ROTATE_LEFT,
+  ROTATE_RIGHT
+};
+#endif

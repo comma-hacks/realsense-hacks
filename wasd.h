@@ -1,15 +1,9 @@
+#ifndef WASD_H
+#define WASD_H
 #include <termios.h>
 #include <unistd.h>
 #include <cstdio>
-
-enum MOVE
-{
-  NONE = 0,
-  MOVE_FORWARD,
-  MOVE_BACKWARD,
-  ROTATE_LEFT,
-  ROTATE_RIGHT
-};
+#include "moves.h"
 
 struct termios old_tio, new_tio;
 
@@ -27,7 +21,7 @@ void resetTerminal()
   tcsetattr(STDIN_FILENO, TCSANOW, &old_tio);
 }
 
-MOVE checkTerminalInput()
+ROBOT_MOVE checkTerminalInput()
 {
   fd_set set;
   struct timeval timeout;
@@ -44,20 +38,21 @@ MOVE checkTerminalInput()
     char key = getchar();
     if (key == 'w' || key == 'W' || key == 'i' || key == 65)
     {
-      return MOVE_FORWARD;
+      return ROBOT_MOVE::MOVE_FORWARD;
     }
     else if (key == 's' || key == 'S' || key == 'k' || key == 66)
     {
-      return MOVE_BACKWARD;
+      return ROBOT_MOVE::MOVE_BACKWARD;
     }
     else if (key == 'a' || key == 'A' || key == 'j' || key == 68)
     {
-      return ROTATE_LEFT;
+      return ROBOT_MOVE::ROTATE_LEFT;
     }
     else if (key == 'd' || key == 'D' || key == 'l' || key == 67)
     {
-      return ROTATE_RIGHT;
+      return ROBOT_MOVE::ROTATE_RIGHT;
     }
   }
-  return NONE;
+  return ROBOT_MOVE::NONE;
 }
+#endif
