@@ -65,22 +65,22 @@ void robotRotateRight() {
 }
 
 
-bool robotApplyMove(ROBOT_MOVE mov) {
+void robotApplyMove(ROBOT_MOVE mov) {
+  
   switch (mov)
     {
-    case MOVE_FORWARD:
+    case ROBOT_MOVE::MOVE_FORWARD:
       robotMoveForward();
-      return true;
-    case MOVE_BACKWARD:
+      break;
+    case ROBOT_MOVE::MOVE_BACKWARD:
       robotMoveBackward();
-      return true;
-    case ROTATE_LEFT:
+      break;
+    case ROBOT_MOVE::ROTATE_LEFT:
       robotRotateLeft();
-      return true;
-    case ROTATE_RIGHT:
+      break;
+    case ROBOT_MOVE::ROTATE_RIGHT:
       robotRotateRight();
-      return true;
+      break;
     }
-    return false;
 }
 #endif
